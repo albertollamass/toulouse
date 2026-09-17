@@ -255,6 +255,39 @@ $("#place-form").onsubmit = e=>{
   renderPlaces();
 };
 
+// ---------- Objetivos oficiales (broma interna, solo local) ----------
+const GOALS = [
+  "Morillo liga con una trannie francesa",
+  "Juan vuelve sin ets",
+  "Monzón tu objetivo es no roncar tanto sólo",
+  "Paco nos invita a todo",
+  "Nadie pierde el vuelo de vuelta"
+];
+function loadGoals(){ try{return JSON.parse(localStorage.getItem("tls_goals")||"{}")}catch{return{}} }
+function renderGoals(){
+  const g=loadGoals(), box=$("#goals"); if(!box) return; box.innerHTML="";
+  GOALS.forEach((t,i)=>{
+    const l=document.createElement("label");
+    l.innerHTML=`<input type="checkbox" ${g[i]?"checked":""} style="width:auto"> ${t}`;
+    l.querySelector("input").onchange=e=>{ const gg=loadGoals(); gg[i]=e.target.checked; localStorage.setItem("tls_goals",JSON.stringify(gg)); };
+    box.appendChild(l);
+  });
+}
+
+// ---------- Tostada + easter eggs ----------
+let toastTimer=null;
+function toast(msg){
+  const el=$("#toast"); if(!el) return;
+  el.textContent=msg; el.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>el.classList.remove("show"), 2800);
+}
+function tapEgg(el, taps, msg){
+  if(!el) return;
+  let n=0;
+  el.onclick=()=>{ n++; if(n>=taps){ n=0; toast(msg); } };
+}
+
 // ---------- Checklist ----------
 const CHECKS = ["Pasaportes/DNI","Billetes descargados","Gastos al día en la web","Taxi 4:30 del día 5 (team Sevilla)","Adaptadores / cargadores","Paco: llaves apartamento","Ganas de cassoulet"];
 function loadChecks(){ try{return JSON.parse(localStorage.getItem(LS.checklist)||"{}")}catch{return{}} }
@@ -307,6 +340,8 @@ $("#sync-refresh-map").onclick = ()=>refreshFromCloud();
 // ---------- init (raíz de composición del driver) ----------
 App = window.TripApp.createApp({exp:LS.exp, places:LS.places}, setCloudStatus);
 importFromHash();
-renderProfileGrid(); updateWho(); renderPlan(); renderFlights(); renderExpenseForm(); renderExpenses(); renderChecks(); initMap();
+renderProfileGrid(); updateWho(); renderPlan(); renderFlights(); renderExpenseForm(); renderExpenses(); renderChecks(); renderGoals(); initMap();
+tapEgg($("#trip-title"), 5, "Logro desbloqueado: tranny certificado de la Ville Rose 🍆");
+tapEgg($("#paco-egg"), 3, "Paco finge que no os conoce ✅");
 App.ready.then(()=>{ renderExpenses(); renderPlaces(); });
 if(!loadWho()) $("#profile-modal").classList.remove("hidden");

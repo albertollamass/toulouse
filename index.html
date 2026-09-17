@@ -24,8 +24,8 @@
     <button id="whoami-btn" class="whoami" title="Cambiar usuario">Soy <span id="whoami-label">nadie aún</span></button>
   </div>
   <div class="masthead">
-    <h1>Operación <em>Paco</em> en Toulouse</h1>
-    <p class="crew">Juan, Monzón, Isidro, Morillo y Alberto visitan a Paco. Cuatro noches de turismo, tapeo y fiesta con horarios, gastos y mapa en un solo sitio.</p>
+    <h1 id="trip-title">Operación <em>Trannies</em> en Toulouse</h1>
+    <p class="crew">Juan, Monzón, Isidro, Morillo y Alberto visitan a <span id="paco-egg">Paco</span>. Cuatro noches de turismo, tapeo y fiesta con horarios, gastos y mapa en un solo sitio.</p>
     <div class="hero-badges">
       <span>Apartamento: 18 Rue de Cugnaux</span>
       <span>Paco: 64 Av. de Lombez</span>
@@ -49,6 +49,11 @@
       <div class="legend">
         <span>🏛 turismo</span><span>🍷 tapeo</span><span>🌙 fiesta</span><span>✈️ vuelos</span>
       </div>
+    </div>
+    <div class="card" id="goals-card">
+      <h3>Objetivos oficiales del viaje</h3>
+      <div id="goals" class="checks vertical"></div>
+      <p class="hint">Incumplir un objetivo se paga con una ronda. Sin excepciones, Morillo.</p>
     </div>
     <div id="itinerary"></div>
   </section>
@@ -159,6 +164,8 @@
     </div>
   </section>
 </main>
+
+<div id="toast" class="toast"></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
