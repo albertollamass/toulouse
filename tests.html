@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pruebas del dominio TripDomain</title>
+<style>
+body{font-family:monospace;max-width:720px;margin:24px auto;padding:0 16px;background:#17121b;color:#f5eee8}
+.pass{color:#4cc38a}.fail{color:#ff7a7a;font-weight:bold}
+li{margin:4px 0}
+</style>
+</head>
+<body>
+<h1>TripDomain: pruebas sin mocks</h1>
+<p>Solo cargan domain.js. Sin DOM de la app, sin localStorage, sin Firebase.</p>
+<ul id="out"></ul>
+<script src="domain.js"></script>
+<script>
+(function(){
+  const D = window.TripDomain;
+  const out = document.getElementById("out");
+  let pass = 0, fail = 0;
+  function t(name, cond){
+    const li = document.createElement("li");
+    li.className = cond ? "pass" : "fail";
+    li.textContent = (cond ? "PASS " : "FAIL ") + name;
+    out.appendChild(li);
+    cond ? pass++ : fail++;
+  }
+  function throws(fn, code){
+    try{ fn(); return false; }
+    catch(e){ return e && e.code === code; }
+  }
+
+  // Dinero
+  t("10.50 euros son 1050 céntimos", D.eurosToCents(10.50) === 1050);
+  t("0.1+0.2 no arrastra error binario", D.eurosToCents(0.1) + D.eurosToCents(0.2) === 30);
+  t("formato 1050 céntimos", D.formatEUR(1050) === "10.50€");
+  t("formato negativo", D.formatEUR(-320) === "-3.20€");
+
+  // Gasto
+  const g = D.createExpense({title:"Cena", amountEuros:10, payer:"Juan", parts:["Juan","Paco"]});
+  t("gasto válido conserva datos", g.title === "Cena" && g.amount === 10 && g.parts.length === 2);
+  t("sin título", throws(()=>D.createExpense({title:" ", amountEuros:5, payer:"Juan", parts:["Juan"]}), "TITLE_REQUIRED"));
+  t("importe cero", throws(()=>D.createExpense({title:"X", amountEuros:0, payer:"Juan", parts:["Juan"]}), "AMOUNT_POSITIVE"));
+  t("importe no numérico", throws(()=>D.createExpense({title:"X", amountEuros:NaN, payer:"Juan", parts:["Juan"]}), "INVALID_AMOUNT"));
+  t("sin participantes", throws(()=>D.createExpense({title:"X", amountEuros:5, payer:"Juan", parts:[]}), "PARTICIPANTS_REQUIRED"));
+
+  // Reparto exacto en céntimos
+  const shares = D.splitShares({amount:10, parts:["A","B","C"]});
+  const total = shares.reduce((s,x)=>s+x.cents,0);
+  t("10 euros entre 3 suman 1000 céntimos", total === 1000);
+  t("el resto va a los primeros", shares[0].cents === 334 && shares[2].cents === 333);
+
+  // Balances y deudas
+  const bal = D.computeBalances([
+    {amount:60, payer:"Juan", parts:["Juan","Monzón","Isidro"]},
+    {amount:30, payer:"Paco", parts:["Juan","Paco"]}
+  ], ["Juan","Monzón","Isidro","Paco"]);
+  t("balances exactos", bal.Juan === 2500 && bal["Monzón"] === -2000 && bal.Isidro === -2000 && bal.Paco === 1500);
+  t("la suma de balances es cero", Object.values(bal).reduce((s,v)=>s+v,0) === 0);
+  const debts = D.simplifyDebts(bal);
+  t("deudas cubren todo", debts.reduce((s,d)=>s+d.cents,0) === 4000);
+  t("sin deudas con balances a cero", D.simplifyDebts({A:0,B:0}).length === 0);
+
+  // Lugar
+  const p = D.createPlace({name:"Bar Paco", category:"extra", lat:43.6, lng:1.43, note:"x"});
+  t("lugar válido", p.n === "Bar Paco" && p.lat === 43.6);
+  t("latitud fuera de rango", throws(()=>D.createPlace({name:"X", lat:91, lng:0}), "LAT_RANGE"));
+  t("coordenada no numérica", throws(()=>D.createPlace({name:"X", lat:NaN, lng:0}), "LAT_RANGE"));
+  t("sin nombre", throws(()=>D.createPlace({name:" ", lat:43, lng:1}), "NAME_REQUIRED"));
+
+  const sum = document.createElement("p");
+  sum.innerHTML = "<b>" + pass + " pasan, " + fail + " fallan.</b>";
+  document.body.appendChild(sum);
+})();
+</script>
+</body>
+</html>

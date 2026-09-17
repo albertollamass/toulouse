@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Toulouse 1-5 Oct con Paco</title>
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+</head>
+<body>
+
+<div id="profile-modal" class="modal hidden">
+  <div class="modal-card">
+    <h2>🍷 Bienvenue à Toulouse!</h2>
+    <p>¿Quién eres? Se guardará en este navegador para personalizar la web (gastos, vuelos, planning).</p>
+    <div id="profile-grid" class="avatar-grid"></div>
+    <p class="hint">Puedes cambiarlo luego arriba a la derecha.</p>
+  </div>
+</div>
+
+<header class="hero">
+  <div class="hero-top">
+    <div class="brand">Cuartel general del viaje <span>1-5 oct</span></div>
+    <button id="whoami-btn" class="whoami" title="Cambiar usuario">Soy <span id="whoami-label">nadie aún</span></button>
+  </div>
+  <div class="masthead">
+    <h1>Operación <em>Paco</em> en Toulouse</h1>
+    <p class="crew">Juan, Monzón, Isidro, Morillo y Alberto visitan a Paco. Cuatro noches de turismo, tapeo y fiesta con horarios, gastos y mapa en un solo sitio.</p>
+    <div class="hero-badges">
+      <span>Apartamento: 18 Rue de Cugnaux</span>
+      <span>Paco: 64 Av. de Lombez</span>
+      <a href="https://tricount.com/tConqgToZfiMYZHJmF" target="_blank" rel="noopener">Tricount oficial</a>
+    </div>
+  </div>
+  <nav class="tabs">
+    <button data-tab="planning" class="active">🗓 Planning</button>
+    <button data-tab="vuelos">✈️ Vuelos</button>
+    <button data-tab="gastos">💰 Tricount</button>
+    <button data-tab="mapa">📍 Mapa</button>
+    <button data-tab="info">ℹ️ Info</button>
+  </nav>
+</header>
+
+<main>
+  <!-- PLANNING -->
+  <section id="tab-planning" class="tab active">
+    <div class="card intro">
+      <h2>Itinerario, 1 al 5 de octubre</h2>
+      <p>Turismo clásico toulousain, tapeo y fiesta. Toca cada plan para tacharlo, se guarda en tu móvil. Los vuelos ya vienen integrados.</p>
+      <div class="legend">
+        <span>🏛 turismo</span><span>🍷 tapeo</span><span>🌙 fiesta</span><span>✈️ vuelos</span>
+      </div>
+    </div>
+    <div id="itinerary"></div>
+  </section>
+
+  <!-- VUELOS -->
+  <section id="tab-vuelos" class="tab">
+    <div class="card">
+      <h2>✈️ Vuelos en dos tandas</h2>
+      <p>Elige desde dónde vuela cada uno. Se guarda automáticamente.</p>
+      <div class="flights-grid">
+        <div class="flight sevilla">
+          <h3>🟠 Sevilla (SVQ-TLS)</h3>
+          <p><strong>Ida 1 oct:</strong> <span class="time">9:15-11:00</span></p>
+          <p><strong>Vuelta 5 oct:</strong> <span class="time">6:25-8:10</span>, madrugón con taxi hacia las 4:30</p>
+        </div>
+        <div class="flight madrid">
+          <h3>🔵 Madrid (MAD-TLS)</h3>
+          <p><strong>Ida 1 oct:</strong> <span class="time">18:55-20:15</span></p>
+          <p><strong>Vuelta 5 oct:</strong> <span class="time">10:45-12:15</span></p>
+        </div>
+      </div>
+      <h3>Asignación</h3>
+      <div id="flight-assign"></div>
+      <div id="flight-summary" class="summary"></div>
+    </div>
+  </section>
+
+  <!-- GASTOS -->
+  <section id="tab-gastos" class="tab">
+    <div class="card">
+      <h2>💰 Tricount del viaje</h2>
+      <p>Cuentas compartidas sin salir de aquí. <a href="https://tricount.com/tConqgToZfiMYZHJmF" target="_blank" rel="noopener">Ver Tricount oficial</a></p>
+      <p class="hint" id="exp-cloud">Comprobando sincronización…</p>
+      <button id="sync-refresh-exp" class="btn ghost small">Actualizar</button>
+      <div id="balances" class="balances"></div>
+      <div id="settlements" class="settlements"></div>
+    </div>
+    <div class="card">
+      <h3>Añadir gasto</h3>
+      <form id="expense-form">
+        <input id="exp-title" placeholder="Concepto (ej. Cena Chez Emile)" required maxlength="60">
+        <div class="row">
+          <input id="exp-amount" type="number" min="0.01" step="0.01" placeholder="Importe €" required>
+          <select id="exp-payer"></select>
+        </div>
+        <label class="lbl">¿Entre quién se divide?</label>
+        <div id="exp-participants" class="checks"></div>
+        <div class="row">
+          <button type="button" id="exp-all" class="btn ghost">Todos</button>
+          <button type="submit" class="btn primary">Añadir gasto</button>
+        </div>
+      </form>
+    </div>
+    <div class="card">
+      <h3>Historial <button id="exp-clear" class="btn danger small">Borrar todo</button></h3>
+      <div id="expense-list"></div>
+    </div>
+  </section>
+
+  <!-- MAPA -->
+  <section id="tab-mapa" class="tab">
+    <div class="card">
+      <h2>📍 Mapa del viaje</h2>
+      <p>Lugares clave guardados. Toca un pin para ver detalles.</p>
+      <p class="hint" id="map-cloud">Comprobando sincronización…</p>
+      <button id="sync-refresh-map" class="btn ghost small">Actualizar</button>
+      <div id="map"></div>
+      <div class="row wrap" style="margin-top:10px">
+        <select id="place-filter">
+          <option value="all">Ver: Todo</option>
+          <option value="casa">🏠 Casas</option>
+          <option value="turismo">🏛 Turismo</option>
+          <option value="fiesta">🌙 Fiesta / Bares</option>
+          <option value="extra">⭐ Extras</option>
+        </select>
+      </div>
+      <div id="place-list" class="places"></div>
+    </div>
+    <div class="card">
+      <h3>Añadir lugar propio</h3>
+      <form id="place-form" class="row wrap">
+        <input id="pl-name" placeholder="Nombre (ej. Bar favorito de Paco)" required maxlength="60">
+        <input id="pl-lat" type="number" step="any" placeholder="Lat (ej. 43.6045)" required>
+        <input id="pl-lng" type="number" step="any" placeholder="Lng (ej. 1.4442)" required>
+        <button class="btn primary" type="submit">Añadir 📌</button>
+      </form>
+      <p class="hint">Tip: mantén pulsado el mapa para copiar coordenadas, o busca la dirección en Google Maps.</p>
+    </div>
+  </section>
+
+  <!-- INFO -->
+  <section id="tab-info" class="tab">
+    <div class="card">
+      <h2>ℹ️ Info práctica</h2>
+      <ul class="info-list">
+        <li>🏠 <strong>Apartamento (5).</strong> 18 Rue de Cugnaux, Toulouse 31300. Metro A parada St-Cyprien République, tranvía T1/T2 cerca.</li>
+        <li>🧑‍🏠 <strong>Paco.</strong> 64 Avenue de Lombez, Quartier 3. Metro A parada Arènes o Patte d'Oie. Queda a unos 15 min andando del apartamento.</li>
+        <li>✈️ <strong>Aeropuerto al centro.</strong> Tranvía T2 hasta Arènes (unos 25 min, unos 6 €) o taxi y Uber (unos 25 €, 15 min).</li>
+        <li>🚇 <strong>Transporte.</strong> Metros A y B hasta las 00:00, hasta las 3:00 viernes y sábado. Billete Tisséo 1,90 €, pase de día 7 €.</li>
+        <li>🌙 <strong>Fiesta.</strong> Place Saint-Pierre con bares pegados, Rue Gabriel Péri y Carmes. Clubs: L'Opium, Le Purple y La Couleur de la Culotte. Paco tiene la última palabra.</li>
+        <li>🍷 <strong>Para probar.</strong> Cassoulet, magret, saucisse de Toulouse, vinos de Fronton y Cahors, y pastelería para desayunar.</li>
+        <li>📞 <strong>Emergencias: 112.</strong> Paco ejerce de guía y traductor oficial del grupo.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Checklist grupo</h3>
+      <div id="checklist" class="checks vertical"></div>
+    </div>
+  </section>
+</main>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="domain.js"></script>
+<script src="repos.js"></script>
+<script src="usecases.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
