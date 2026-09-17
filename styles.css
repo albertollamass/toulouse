@@ -330,6 +330,8 @@ form input::placeholder{color:var(--muted);opacity:.8}
 .checks.vertical{flex-direction:column}
 .checks.vertical label{border-radius:18px}
 .btn{
+  display:inline-block;
+  text-decoration:none;
   border-radius:999px;
   padding:12px 20px;
   cursor:pointer;
@@ -361,6 +363,7 @@ form input::placeholder{color:var(--muted);opacity:.8}
 .places{margin-top:6px;border-top:1px solid var(--line)}
 .place{
   display:flex;
+  flex-wrap:wrap;
   justify-content:space-between;
   align-items:center;
   gap:8px;
@@ -368,6 +371,8 @@ form input::placeholder{color:var(--muted);opacity:.8}
   border-bottom:1px solid var(--line);
   font-size:.9em;
 }
+.place>div:first-child{flex:1 1 240px;min-width:0}
+.place .btn.small{margin-left:0}
 .place:last-child{border-bottom:none}
 .place small{color:var(--muted)}
 

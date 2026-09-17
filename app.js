@@ -4,7 +4,7 @@
    El CRUD simple y local (perfil, planning, vuelos, checklist) se queda
    aquí tal cual: no justifica capas propias. */
 const PEOPLE = ["Juan","Monzón","Isidro","Morillo","Alberto","Paco"];
-const LS = { who:"tls_whoami", flights:"tls_flights", exp:"tls_expenses", done:"tls_done", checklist:"tls_check", places:"tls_places" };
+const LS = { who:"tls_whoami", flights:"tls_flights", exp:"tls_expenses", done:"tls_done", checklist:"tls_check", places:"tls_places", tab:"tls_tab" };
 const $ = s => document.querySelector(s);
 
 function setCloudStatus(txt){
@@ -37,6 +37,7 @@ function refreshFromCloud(silent){
 function showTab(name){
   document.querySelectorAll(".tabs button").forEach(x=>x.classList.toggle("active", x.dataset.tab===name));
   document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active", x.id==="tab-"+name));
+  try{ localStorage.setItem(LS.tab, name); }catch(e){}
   if(name==="mapa" && typeof map!=="undefined" && map) setTimeout(()=>{ try{map.invalidateSize();}catch(e){} },200);
   document.querySelector("main").scrollIntoView({behavior:"smooth", block:"start"});
   if(name==="gastos"||name==="mapa") refreshFromCloud(true);
@@ -343,6 +344,15 @@ $("#sync-refresh-map").onclick = ()=>refreshFromCloud();
 App = window.TripApp.createApp({exp:LS.exp, places:LS.places}, setCloudStatus);
 importFromHash();
 renderProfileGrid(); updateWho(); renderPlan(); renderFlights(); renderExpenseForm(); renderExpenses(); renderChecks(); renderGoals(); initMap();
+// Vuelve a la pestaña donde estabas al recargar (sin scroll brusco).
+(function(){
+  let t="planning";
+  try{ t=localStorage.getItem(LS.tab)||"planning"; }catch(e){}
+  if(!document.getElementById("tab-"+t)) t="planning";
+  document.querySelectorAll(".tabs button").forEach(x=>x.classList.toggle("active", x.dataset.tab===t));
+  document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active", x.id==="tab-"+t));
+  if(t==="mapa" && typeof map!=="undefined" && map) setTimeout(()=>{ try{map.invalidateSize();}catch(e){} },200);
+})();
 tapEgg($("#trip-title"), 5, "Logro desbloqueado: tranny certificado de la Ville Rose 🍆");
 tapEgg($("#paco-egg"), 3, "Paco finge que no os conoce ✅");
 App.ready.then(()=>{ renderExpenses(); renderPlaces(); });
