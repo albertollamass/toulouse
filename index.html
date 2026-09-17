@@ -135,13 +135,21 @@
     </div>
     <div class="card">
       <h3>Añadir lugar propio</h3>
+      <div class="row">
+        <input id="pl-url" placeholder="Pega enlace de Google Maps o Apple Maps" inputmode="url">
+        <button id="pl-locate" class="btn ghost" type="button">Localizar</button>
+      </div>
+      <div class="row">
+        <button id="pl-pin-mode" class="btn ghost" type="button">Poner pin en el mapa</button>
+      </div>
+      <p class="hint" id="pl-pin-hint" hidden>Toca el mapa para soltar el pin. Luego puedes arrastrarlo para afinar.</p>
       <form id="place-form" class="row wrap">
         <input id="pl-name" placeholder="Nombre (ej. Bar favorito de Paco)" required maxlength="60">
         <input id="pl-lat" type="number" step="any" placeholder="Lat (ej. 43.6045)" required>
         <input id="pl-lng" type="number" step="any" placeholder="Lng (ej. 1.4442)" required>
         <button class="btn primary" type="submit">Añadir 📌</button>
       </form>
-      <p class="hint">Tip: mantén pulsado el mapa para copiar coordenadas, o busca la dirección en Google Maps.</p>
+      <p class="hint">Tres formas: pega el enlace, suelta el pin o escribe las coordenadas a mano.</p>
     </div>
   </section>
 

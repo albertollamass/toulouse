@@ -197,6 +197,11 @@ const BASE_PLACES = [
  {n:"🍽 Marché Victor Hugo", c:"extra", lat:43.6055, lng:1.4465, d:"Comer arriba el viernes."},
 ];
 let map, markers=[];
+function pinIcon(cls, size){
+  const s=size||18;
+  return L.divIcon({className:"", html:`<span class="mk ${cls}"></span>`, iconSize:[s,s], iconAnchor:[s/2,s/2], popupAnchor:[0,-s/2]});
+}
+function catClass(c){ return c==="casa"?"mk-casa":c==="turismo"?"mk-turismo":c==="fiesta"?"mk-fiesta":"mk-extra"; }
 function placeRowButtons(d, p, extra){
   (extra||[]).forEach(b=>d.appendChild(b));
   if(p.key){
@@ -211,6 +216,7 @@ function initMap(){
   L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:"© OpenStreetMap"}).addTo(map);
   renderPlaces();
   map.on("contextmenu",e=>{ $("#pl-lat").value=e.latlng.lat.toFixed(4); $("#pl-lng").value=e.latlng.lng.toFixed(4); alert("Coordenadas copiadas al formulario ✅"); });
+  map.on("click",e=>{ if(!pinMode) return; showTempPin(e.latlng.lat,e.latlng.lng); setPinMode(false); });
 }
 function renderPlaces(){
   if(typeof L==="undefined" || !map){ renderPlacesNoMap(); return; }
@@ -219,7 +225,7 @@ function renderPlaces(){
   const all=[...BASE_PLACES, ...custom];
   const box=$("#place-list"); box.innerHTML="";
   all.filter(p=>f==="all"||p.c===f).forEach((p,i)=>{
-    const mk=L.marker([p.lat,p.lng]).addTo(map).bindPopup(`<b>${p.n}</b><br>${p.d||""}`);
+    const mk=L.marker([p.lat,p.lng],{icon:pinIcon(catClass(p.c))}).addTo(map).bindPopup(`<b>${p.n}</b><br>${p.d||""}`);
     markers.push(mk);
     const d=document.createElement("div"); d.className="place";
     d.innerHTML=`<div><b>${p.n}</b><br><small>${p.d||""} · ${p.lat.toFixed(4)}, ${p.lng.toFixed(4)}</small></div>`;
@@ -255,7 +261,96 @@ $("#place-form").onsubmit = e=>{
     });
   }catch(err){ alert("Revisa el nombre y las coordenadas del lugar"); return; }
   $("#pl-name").value="";$("#pl-lat").value="";$("#pl-lng").value="";
+  clearTempPin();
   renderPlaces();
+};
+
+// ---------- Pin en el mapa + pegar enlace ----------
+let pinMode=false, tempPin=null;
+function fillCoords(lat, lng){
+  $("#pl-lat").value=(+lat).toFixed(5);
+  $("#pl-lng").value=(+lng).toFixed(5);
+}
+function clearTempPin(){
+  if(tempPin && typeof map!=="undefined" && map){ try{map.removeLayer(tempPin);}catch(e){} }
+  tempPin=null;
+}
+function showTempPin(lat, lng){
+  if(typeof L==="undefined" || !map) return;
+  clearTempPin();
+  fillCoords(lat, lng);
+  tempPin=L.marker([lat,lng],{draggable:true, icon:pinIcon("mk-temp",24)}).addTo(map).bindPopup("Nuevo lugar (arrástrame)").openPopup();
+  map.setView([lat,lng],Math.max(map.getZoom(),14));
+  tempPin.on("dragend",()=>{ const p=tempPin.getLatLng(); fillCoords(p.lat,p.lng); });
+}
+function setPinMode(on){
+  pinMode=on;
+  const b=$("#pl-pin-mode"), h=$("#pl-pin-hint");
+  if(b){ b.classList.toggle("on",on); b.textContent=on?"Cancelar pin":"Poner pin en el mapa"; }
+  if(h) h.hidden=!on;
+  if(typeof map!=="undefined" && map) map.getContainer().style.cursor=on?"crosshair":"";
+  if(!on) return;
+  if(typeof L==="undefined" || !map) alert("El mapa no cargó. Pega el enlace o escribe las coordenadas.");
+}
+$("#pl-pin-mode").onclick=()=>setPinMode(!pinMode);
+
+// Extrae coordenadas de enlaces de Google Maps y Apple Maps.
+function parsePair(s){
+  const m=String(s||"").match(/(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)/);
+  if(!m) return null;
+  const lat=parseFloat(m[1]), lng=parseFloat(m[2]);
+  if(!isFinite(lat)||!isFinite(lng)||Math.abs(lat)>90||Math.abs(lng)>180) return null;
+  return {lat:lat, lng:lng};
+}
+function coordsFromUrl(raw){
+  const u=String(raw||"").trim();
+  if(!u) return {ok:false, error:"Pega primero el enlace."};
+  if(/maps\.app\.goo\.gl|goo\.gl\/maps/i.test(u))
+    return {ok:false, error:"Ese enlace es corto. Ábrelo en el navegador y pega la dirección larga que aparece arriba."};
+  let m=u.match(/^geo:(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/i);
+  if(m) return {ok:true, lat:parseFloat(m[1]), lng:parseFloat(m[2])};
+  m=u.match(/!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/);
+  if(m) return {ok:true, lat:parseFloat(m[1]), lng:parseFloat(m[2])};
+  m=u.match(/@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/);
+  if(m){
+    let nm=null;
+    const pm=u.match(/\/place\/([^/@?]+)/);
+    if(pm){ try{ nm=decodeURIComponent(pm[1]).replace(/\+/g," "); }catch(e){} }
+    return {ok:true, lat:parseFloat(m[1]), lng:parseFloat(m[2]), name:nm};
+  }
+  let name=null;
+  try{
+    const parsed=new URL(u);
+    const keys=["ll","sll","daddr","destination","center","q","query","near","address"];
+    for(const k of keys){
+      const v=parsed.searchParams.get(k);
+      const c=v&&parsePair(v);
+      if(c) return {ok:true, lat:c.lat, lng:c.lng};
+    }
+    const segs=parsed.pathname.split("/");
+    for(const s of segs){
+      const c=parsePair(decodeURIComponent(s));
+      if(c) return {ok:true, lat:c.lat, lng:c.lng};
+    }
+    const pm=parsed.pathname.match(/\/place\/([^/@]+)/);
+    if(pm) name=decodeURIComponent(pm[1]).replace(/\+/g," ");
+  }catch(e){ /* no es URL completa, se intenta como texto */ }
+  const any=parsePair(u);
+  if(any) return {ok:true, lat:any.lat, lng:any.lng, name:name};
+  if(name) return {ok:true, name:name, nocoods:true};
+  return {ok:false, error:"No veo coordenadas en ese enlace. Prueba con Compartir y pega la URL completa."};
+}
+$("#pl-locate").onclick=()=>{
+  const r=coordsFromUrl($("#pl-url").value);
+  if(!r.ok){ alert(r.error); return; }
+  if(r.lat!==undefined){
+    showTempPin(r.lat, r.lng);
+    if(r.name && !$("#pl-name").value) $("#pl-name").value=r.name;
+    toast("Pin colocado. Revisa el nombre y pulsa Añadir.");
+  } else if(r.name){
+    if(!$("#pl-name").value) $("#pl-name").value=r.name;
+    toast("Nombre copiado. Falta situar el pin en el mapa.");
+  }
 };
 
 // ---------- Objetivos oficiales (broma interna, solo local) ----------

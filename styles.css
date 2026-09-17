@@ -22,6 +22,13 @@
   --ok:#4cc38a;
   --shadow:0 24px 60px -24px rgba(0,0,0,.55);
   --ease:cubic-bezier(.32,.72,0,1);
+  /* Escala fluida de texto: nunca por debajo de 12px, nunca grita en desktop */
+  --text-xs:clamp(.75rem,.7rem + .25vw,.875rem);
+  --text-sm:clamp(.875rem,.8rem + .375vw,1rem);
+  --text-base:clamp(1rem,.9rem + .5vw,1.125rem);
+  --text-lg:clamp(1.125rem,1rem + .625vw,1.25rem);
+  --text-xl:clamp(1.25rem,1rem + 1.25vw,1.5rem);
+  --text-2xl:clamp(1.5rem,1.25rem + 1.25vw,2rem);
 }
 @media (prefers-color-scheme: light){
   :root{
@@ -47,6 +54,8 @@ body{
   background:var(--bg);
   color:var(--ink);
   line-height:1.55;
+  font-size:var(--text-base);
+  overflow-x:hidden;
 }
 /* Orbes de luz fijos: resplandor Garona al anochecer. */
 body::before{
@@ -78,6 +87,7 @@ button{font:inherit}
 .hero{position:relative;z-index:1}
 .hero-top{
   display:flex;
+  flex-wrap:wrap;
   justify-content:space-between;
   align-items:center;
   gap:12px;
@@ -112,6 +122,7 @@ button{font:inherit}
   color:var(--ink);
   border-radius:999px;
   padding:9px 16px;
+  min-height:44px;
   cursor:pointer;
   font-size:.88em;
   font-weight:600;
@@ -121,7 +132,7 @@ button{font:inherit}
 .masthead{max-width:860px;margin:0 auto;padding:26px 16px 10px}
 .masthead h1{
   margin:0;
-  font-size:clamp(2.4rem,8vw,3.6rem);
+  font-size:clamp(2.4rem,2rem + 4vw,3.6rem);
   line-height:1.02;
   letter-spacing:-.035em;
   font-weight:800;
@@ -162,21 +173,25 @@ button{font:inherit}
   border-radius:999px;
 }
 .tabs button{
-  flex:1;
+  flex:1 0 auto;
+  min-height:48px;
   white-space:nowrap;
   border:none;
   border-radius:999px;
-  padding:11px 14px;
+  padding:11px 18px;
   background:transparent;
   color:var(--muted);
   font-weight:700;
+  font-size:var(--text-sm);
   cursor:pointer;
   transition:transform .5s var(--ease), background .5s var(--ease), color .5s var(--ease);
 }
+.tabs{scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
 .tabs button.active{background:var(--brick);color:var(--brick-ink);box-shadow:0 8px 24px -8px var(--brick-glow)}
 .tabs button:active{transform:scale(.96)}
 
-main{position:relative;z-index:1;max-width:860px;margin:0 auto;padding:28px 16px 96px}
+main{position:relative;z-index:1;max-width:860px;margin:0 auto;padding:28px 16px calc(96px + env(safe-area-inset-bottom));container-type:inline-size;container-name:page}
 .tab{display:none}
 .tab.active{display:block;animation:fade .45s var(--ease)}
 @keyframes fade{from{opacity:0}to{opacity:1}}
@@ -202,23 +217,26 @@ main{position:relative;z-index:1;max-width:860px;margin:0 auto;padding:28px 16px
   pointer-events:none;
 }
 .card>*{position:relative}
-.card h2{margin:0 0 6px;font-size:1.4em;letter-spacing:-.02em}
-.card h3{margin:0 0 10px;font-size:1.05em}
+.card h2{margin:0 0 6px;font-size:var(--text-xl);letter-spacing:-.02em}
+.card h3{margin:0 0 10px;font-size:var(--text-lg)}
 .card p{margin:8px 0}
 .intro .legend{display:flex;gap:14px;color:var(--muted);font-size:.85em;flex-wrap:wrap}
 
-/* Planning: línea de tiempo real (los días son secuencia). */
+/* Planning: línea de tiempo real (los días son secuencia). Propiedades
+   lógicas para que el diseño sobreviva a cualquier dirección de escritura. */
 .day{
   position:relative;
-  margin:0 0 0 10px;
-  padding:0 0 20px 24px;
-  border-left:1px solid var(--line);
+  margin:0;
+  margin-inline-start:10px;
+  padding:0 0 20px;
+  padding-inline-start:24px;
+  border-inline-start:1px solid var(--line);
 }
 .day:last-child{padding-bottom:2px}
 .day::before{
   content:"";
   position:absolute;
-  left:-7px;
+  inset-inline-start:-7px;
   top:5px;
   width:12px;
   height:12px;
@@ -232,21 +250,23 @@ main{position:relative;z-index:1;max-width:860px;margin:0 auto;padding:28px 16px
 .day ul{margin:0;padding:0;list-style:none}
 .day li{
   margin:0;
-  padding:10px 4px 10px 30px;
+  padding:10px 4px;
+  padding-inline-start:30px;
   border-bottom:1px solid var(--line);
   line-height:1.45;
   cursor:pointer;
   position:relative;
   transition:background .5s var(--ease);
   border-radius:12px;
+  min-height:44px;
 }
 .day li:last-child{border-bottom:none}
-.day li::before{content:"☐";position:absolute;left:4px;color:var(--muted)}
+.day li::before{content:"☐";position:absolute;inset-inline-start:4px;color:var(--muted)}
 .day li.done{opacity:.55;text-decoration:line-through}
 .day li.done::before{content:"☑";color:var(--brick)}
 .tag{
   display:inline-block;
-  font-size:.72em;
+  font-size:var(--text-xs);
   border-radius:999px;
   padding:2px 9px;
   margin-right:6px;
@@ -259,8 +279,14 @@ main{position:relative;z-index:1;max-width:860px;margin:0 auto;padding:28px 16px
 .tag.fie{border-color:var(--brick);color:var(--brick)}
 .tag.vue{border-color:var(--ok);color:var(--ok)}
 
-/* Vuelos: dos pases asimétricos. */
+/* Vuelos: dos pases asimétricos. Colapsan por el ancho de la tarjeta
+   (container), no por el viewport: más correcto en layouts anidados. */
 .flights-grid{display:grid;grid-template-columns:1.15fr 1fr;gap:10px}
+@supports (container-type: inline-size) {
+  @container page (max-width: 560px){
+    .flights-grid{grid-template-columns:1fr}
+  }
+}
 @media(max-width:600px){.flights-grid{grid-template-columns:1fr}}
 .flight{
   border:1px solid var(--line);
@@ -278,6 +304,7 @@ main{position:relative;z-index:1;max-width:860px;margin:0 auto;padding:28px 16px
 #flight-assign{display:grid;gap:0;margin-top:12px;border-top:1px solid var(--line)}
 .frow{
   display:flex;
+  flex-wrap:wrap;
   align-items:center;
   justify-content:space-between;
   gap:10px;
@@ -285,15 +312,15 @@ main{position:relative;z-index:1;max-width:860px;margin:0 auto;padding:28px 16px
   border-bottom:1px solid var(--line);
 }
 .frow .nm{font-weight:700}
-.seg{display:flex;background:var(--field);border:1px solid var(--line);border-radius:999px;overflow:hidden;padding:3px}
-.seg button{border:none;padding:8px 14px;background:transparent;color:var(--muted);cursor:pointer;font-weight:700;border-radius:999px;transition:transform .45s var(--ease), background .45s var(--ease)}
+.seg{flex:1 1 220px;display:flex;background:var(--field);border:1px solid var(--line);border-radius:999px;overflow:hidden;padding:3px}
+.seg button{flex:1;border:none;min-height:44px;padding:10px 12px;background:transparent;color:var(--muted);cursor:pointer;font-weight:700;border-radius:999px;transition:transform .45s var(--ease), background .45s var(--ease)}
 .seg button.on-s{background:var(--sevilla);color:#1d130a}
 .seg button.on-m{background:var(--madrid);color:#0d1a26}
 .seg button:active{transform:scale(.95)}
 .summary{margin-top:10px;color:var(--muted);font-size:.92em}
 
 /* Libro de gastos: filas con divisores, núcleos para saldos. */
-.balances{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:12px}
+.balances{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,140px),1fr));gap:8px;margin-bottom:12px}
 .bal{
   padding:12px 10px;
   border:1px solid var(--line);
@@ -321,11 +348,12 @@ form input,form select{
 form input:focus,form select:focus{border-color:var(--brick);outline:none}
 form input::placeholder{color:var(--muted);opacity:.8}
 .lbl{display:block;font-weight:700;margin:6px 0;font-size:.9em}
-.row{display:flex;gap:8px}
+.row{display:flex;flex-wrap:wrap;gap:8px}
+.row>*{flex:1 1 150px;min-width:0}
 .row.wrap{flex-wrap:wrap}
 .wrap input{flex:1;min-width:140px}
 .checks{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
-.checks label{border:1px solid var(--line);padding:7px 13px;border-radius:999px;font-size:.85em;cursor:pointer;transition:transform .45s var(--ease), border-color .45s var(--ease)}
+.checks label{display:inline-flex;align-items:center;min-height:44px;border:1px solid var(--line);padding:7px 13px;border-radius:999px;font-size:.85em;cursor:pointer;transition:transform .45s var(--ease), border-color .45s var(--ease)}
 .checks label:active{transform:scale(.96)}
 .checks.vertical{flex-direction:column}
 .checks.vertical label{border-radius:18px}
@@ -344,7 +372,7 @@ form input::placeholder{color:var(--muted);opacity:.8}
 .btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
 .btn.ghost:active{transform:scale(.96)}
 .btn.danger{background:transparent;border:1px solid var(--brick);color:var(--brick)}
-.btn.small{font-size:.82em;padding:8px 14px;margin-left:8px;white-space:nowrap}
+.btn.small{font-size:.82em;min-height:44px;padding:10px 16px;margin-inline-start:8px;white-space:nowrap}
 #expense-list .exp{
   display:flex;
   justify-content:space-between;
@@ -354,12 +382,21 @@ form input::placeholder{color:var(--muted);opacity:.8}
   border-bottom:1px solid var(--line);
   font-size:.92em;
 }
+#expense-list .exp>div:first-child{min-width:0;overflow-wrap:anywhere}
 #expense-list .exp:last-child{border-bottom:none}
 .exp small{color:var(--muted)}
-.del{background:none;border:none;cursor:pointer;font-size:1.1em;color:var(--muted)}
+.del{background:none;border:none;cursor:pointer;font-size:1.1em;color:var(--muted);min-width:44px;min-height:44px;flex:none}
 
 /* Mapa */
-#map{height:380px;border-radius:20px;z-index:1;border:1px solid var(--line);box-shadow:var(--shadow)}
+#map{height:clamp(280px,60dvh,380px);border-radius:20px;z-index:1;border:1px solid var(--line);box-shadow:var(--shadow)}
+/* Pines del mapa por categoría + pin temporal */
+.mk{display:block;width:18px;height:18px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.5)}
+.mk-casa{background:var(--ok)}
+.mk-turismo{background:var(--madrid)}
+.mk-fiesta{background:var(--brick)}
+.mk-extra{background:var(--sevilla)}
+.mk-temp{width:24px;height:24px;background:var(--brick);animation:pulse 1.6s var(--ease) infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 var(--brick-glow)}70%{box-shadow:0 0 0 12px transparent}100%{box-shadow:0 0 0 0 transparent}}
 .places{margin-top:6px;border-top:1px solid var(--line)}
 .place{
   display:flex;
@@ -372,7 +409,7 @@ form input::placeholder{color:var(--muted);opacity:.8}
   font-size:.9em;
 }
 .place>div:first-child{flex:1 1 240px;min-width:0}
-.place .btn.small{margin-left:0}
+.place .btn.small{margin-inline-start:0}
 .place:last-child{border-bottom:none}
 .place small{color:var(--muted)}
 
@@ -398,6 +435,8 @@ form input::placeholder{color:var(--muted);opacity:.8}
   padding:26px;
   max-width:420px;
   width:100%;
+  max-height:90dvh;
+  overflow-y:auto;
   text-align:center;
 }
 .avatar-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0}
@@ -414,6 +453,7 @@ form input::placeholder{color:var(--muted);opacity:.8}
 }
 .avatar-grid button:active{transform:scale(.95)}
 .hint{color:var(--muted);font-size:.85em}
+#pl-pin-mode.on{background:var(--brick);border-color:var(--brick);color:var(--brick-ink)}
 #paco-egg{cursor:pointer;border-bottom:1px dashed var(--brick)}
 #trip-title{cursor:pointer}
 
@@ -421,7 +461,7 @@ form input::placeholder{color:var(--muted);opacity:.8}
 .toast{
   position:fixed;
   left:50%;
-  bottom:24px;
+  bottom:calc(24px + env(safe-area-inset-bottom));
   z-index:120;
   max-width:min(92vw,480px);
   padding:14px 20px;
