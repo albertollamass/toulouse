@@ -224,7 +224,9 @@ function renderPlaces(){
     d.innerHTML=`<div><b>${p.n}</b><br><small>${p.d||""} · ${p.lat.toFixed(4)}, ${p.lng.toFixed(4)}</small></div>`;
     const btn=document.createElement("button"); btn.className="btn ghost small"; btn.textContent="Ver";
     btn.onclick=()=>{ map.setView([p.lat,p.lng],15); mk.openPopup(); };
-    placeRowButtons(d, p, [btn]); box.appendChild(d);
+    const maps=document.createElement("a"); maps.className="btn ghost small"; maps.textContent="Maps"; maps.target="_blank"; maps.rel="noopener";
+    maps.href=`https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lng}`;
+    placeRowButtons(d, p, [btn, maps]); box.appendChild(d);
   });
 }
 function renderPlacesNoMap(){
