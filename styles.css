@@ -349,6 +349,7 @@ form input:focus,form select:focus{border-color:var(--brick);outline:none}
 form input::placeholder{color:var(--muted);opacity:.8}
 .lbl{display:block;font-weight:700;margin:6px 0;font-size:.9em}
 .row{display:flex;flex-wrap:wrap;gap:12px}
+.row + .row{margin-top:12px}
 .row>*{flex:1 1 150px;min-width:0}
 .row.wrap{flex-wrap:wrap}
 .wrap input{flex:1;min-width:140px}
@@ -373,7 +374,7 @@ form input::placeholder{color:var(--muted);opacity:.8}
 .btn.ghost:active{transform:scale(.96)}
 .btn.danger{background:transparent;border:1px solid var(--brick);color:var(--brick)}
 .btn.small{font-size:.82em;min-height:44px;padding:10px 16px;margin-inline-start:8px;white-space:nowrap}
-#sync-refresh-exp,#sync-refresh-map{margin-top:8px}
+#sync-refresh-exp,#sync-refresh-map{margin-top:8px;margin-bottom:14px}
 #expense-list .exp{
   display:flex;
   justify-content:space-between;
