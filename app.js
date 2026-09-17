@@ -256,7 +256,7 @@ $("#place-form").onsubmit = e=>{
 };
 
 // ---------- Checklist ----------
-const CHECKS = ["Pasaportes/DNI","Billetes descargados","Tricount oficial unido","Taxi 4:30 del día 5 (team Sevilla)","Adaptadores / cargadores","Paco: llaves apartamento","Ganas de cassoulet"];
+const CHECKS = ["Pasaportes/DNI","Billetes descargados","Gastos al día en la web","Taxi 4:30 del día 5 (team Sevilla)","Adaptadores / cargadores","Paco: llaves apartamento","Ganas de cassoulet"];
 function loadChecks(){ try{return JSON.parse(localStorage.getItem(LS.checklist)||"{}")}catch{return{}} }
 function renderChecks(){
   const c=loadChecks(), box=$("#checklist"); box.innerHTML="";
