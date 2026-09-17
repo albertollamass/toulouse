@@ -181,8 +181,8 @@ function renderExpenses(){
 
 // ---------- Mapa ----------
 const BASE_PLACES = [
- {n:"🏠 Apartamento, 18 Rue de Cugnaux", c:"casa", lat:43.5965, lng:1.4306, d:"Base del grupo. Metro A St-Cyprien."},
- {n:"🧑‍🏠 Casa de Paco, 64 Av. de Lombez", c:"casa", lat:43.5903, lng:1.4065, d:"Anfitrión. Previa del sábado aquí."},
+ {n:"🏠 Apartamento, 18 Rue de Cugnaux", c:"casa", lat:43.5918, lng:1.4210, d:"Base del grupo. Metro A St-Cyprien."},
+ {n:"🧑‍🏠 Casa de Paco, 64 Av. de Lombez", c:"casa", lat:43.5955, lng:1.4175, d:"Anfitrión. Previa del sábado aquí."},
  {n:"✈️ Aeropuerto TLS Blagnac", c:"extra", lat:43.6291, lng:1.3638, d:"Llegadas 11:00 y 20:15 · salidas 6:25 y 10:45."},
  {n:"🏛 Place du Capitole", c:"turismo", lat:43.6045, lng:1.4442, d:"Km 0. Sala de los Ilustres gratis."},
  {n:"⛪ Basilique Saint-Sernin", c:"turismo", lat:43.6084, lng:1.4422, d:"Románico UNESCO."},
