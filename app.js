@@ -362,6 +362,8 @@ const GOALS = [
   "Nadie pierde el vuelo de vuelta"
 ];
 function loadGoals(){ try{return JSON.parse(localStorage.getItem("tls_goals")||"{}")}catch{return{}} }
+function loadCustomGoals(){ try{const a=JSON.parse(localStorage.getItem("tls_goals_custom")||"[]"); return Array.isArray(a)?a:[]}catch{return[]} }
+function saveCustomGoals(a){ localStorage.setItem("tls_goals_custom",JSON.stringify(a)); }
 function renderGoals(){
   const g=loadGoals(), box=$("#goals"); if(!box) return; box.innerHTML="";
   GOALS.forEach((t,i)=>{
@@ -370,7 +372,29 @@ function renderGoals(){
     l.querySelector("input").onchange=e=>{ const gg=loadGoals(); gg[i]=e.target.checked; localStorage.setItem("tls_goals",JSON.stringify(gg)); };
     box.appendChild(l);
   });
+  loadCustomGoals().forEach((cg,ci)=>{
+    const w=document.createElement("div"); w.className="goal-row";
+    const l=document.createElement("label");
+    const cb=document.createElement("input");
+    cb.type="checkbox"; cb.checked=!!cg.done; cb.style.width="auto";
+    cb.onchange=e=>{ const cc=loadCustomGoals(); cc[ci].done=e.target.checked; saveCustomGoals(cc); };
+    l.appendChild(cb);
+    l.appendChild(document.createTextNode(" "+cg.t));
+    const q=document.createElement("button"); q.className="del"; q.textContent="✕"; q.title="Quitar objetivo";
+    q.onclick=()=>{ saveCustomGoals(loadCustomGoals().filter((_,i)=>i!==ci)); renderGoals(); };
+    w.appendChild(l); w.appendChild(q); box.appendChild(w);
+  });
 }
+$("#goal-form").onsubmit=e=>{
+  e.preventDefault();
+  const t=$("#goal-input").value.trim();
+  if(!t) return;
+  const c=loadCustomGoals();
+  c.push({t:t.slice(0,80), done:false});
+  saveCustomGoals(c);
+  $("#goal-input").value="";
+  renderGoals();
+};
 
 // ---------- Tostada + easter eggs ----------
 let toastTimer=null;

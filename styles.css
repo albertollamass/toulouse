@@ -456,6 +456,8 @@ form input::placeholder{color:var(--muted);opacity:.8}
 .avatar-grid button:active{transform:scale(.95)}
 .hint{color:var(--muted);font-size:.85em}
 #pl-pin-mode.on{background:var(--brick);border-color:var(--brick);color:var(--brick-ink)}
+.goal-row{display:flex;align-items:center;gap:8px}
+.goal-row label{flex:1;border:1px solid var(--line);padding:7px 13px;border-radius:18px;font-size:.85em;cursor:pointer}
 #paco-egg{cursor:pointer;border-bottom:1px dashed var(--brick)}
 #trip-title{cursor:pointer}
 
