@@ -311,7 +311,7 @@ main{position:relative;z-index:1;max-width:860px;margin:0 auto;padding:28px 16px
   padding:11px 2px;
   border-bottom:1px solid var(--line);
 }
-.frow .nm{font-weight:700}
+.frow .nm{font-weight:700;flex:0 0 96px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .seg{flex:1 1 220px;display:flex;background:var(--field);border:1px solid var(--line);border-radius:999px;overflow:hidden;padding:3px}
 .seg button{flex:1;border:none;min-height:44px;padding:10px 12px;background:transparent;color:var(--muted);cursor:pointer;font-weight:700;border-radius:999px;transition:transform .45s var(--ease), background .45s var(--ease)}
 .seg button.on-s{background:var(--sevilla);color:#1d130a}
