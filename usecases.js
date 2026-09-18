@@ -96,6 +96,56 @@
     return {list:list, add:add, remove:remove, refresh:refresh, importAll:importAll};
   }
 
+  // Objetivos del grupo: un documento único {checks:{}, custom:[]}.
+  // Escritura completa (set) porque el doc es diminuto y cambia poco.
+  // Tradeoff: dos ediciones simultáneas, gana la última. A este ritmo vale.
+  function blankGoals(){ return {checks:{}, custom:[]}; }
+  function GoalBook(localDoc, cloudDoc){
+    function state(){
+      const s = localDoc.load()||blankGoals();
+      if(!s.checks) s.checks={};
+      if(!Array.isArray(s.custom)) s.custom=[];
+      return s;
+    }
+    function persist(s){
+      localDoc.save(s);
+      if(cloudDoc) cloudDoc.save(s);
+      return s;
+    }
+    function setCheck(i, val){
+      const s=state(); s.checks[i]=!!val; persist(s); return s;
+    }
+    function addCustom(title){
+      const t=String(title||"").trim().slice(0,80);
+      if(!t) return state();
+      const s=state(); s.custom.push({t:t, done:false}); persist(s); return s;
+    }
+    function toggleCustom(ci){
+      const s=state();
+      if(s.custom[ci]) s.custom[ci].done=!s.custom[ci].done;
+      persist(s); return s;
+    }
+    function removeCustom(ci){
+      const s=state();
+      s.custom=s.custom.filter((_,i)=>i!==ci);
+      persist(s); return s;
+    }
+    function refresh(){
+      if(!cloudDoc) return Promise.resolve(state());
+      return cloudDoc.fetch().then(remote=>{
+        if(remote && typeof remote==="object"){
+          const s={checks:remote.checks||{}, custom:Array.isArray(remote.custom)?remote.custom:[]};
+          localDoc.save(s);
+          return s;
+        }
+        const s=state();
+        if(Object.keys(s.checks).length || s.custom.length) cloudDoc.save(s);
+        return s;
+      });
+    }
+    return {state:state, setCheck:setCheck, addCustom:addCustom, toggleCustom:toggleCustom, removeCustom:removeCustom, refresh:refresh};
+  }
+
   // Raíz de composición: aquí, y solo aquí, se eligen los adaptadores.
   function createApp(storageKeys, onStatus){
     const status = onStatus||function(){};
@@ -107,9 +157,14 @@
       global.TripRepos.LocalRepo(storageKeys.places),
       null
     );
+    const goals = GoalBook(
+      global.TripRepos.LocalDoc(storageKeys.goals, blankGoals()),
+      null
+    );
     const app = {
       expenses: expenses,
       places: places,
+      goals: goals,
       cloud: false,
       ready: Promise.resolve(),
       refresh: function(silent){ return Promise.resolve(); }
@@ -124,6 +179,7 @@
       const plCloud = global.TripRepos.FirebaseRepo("customPlaces");
       app.expenses = ExpenseLedger(global.TripRepos.LocalRepo(storageKeys.exp), expCloud);
       app.places = PlaceBook(global.TripRepos.LocalRepo(storageKeys.places), plCloud);
+      app.goals = GoalBook(global.TripRepos.LocalDoc(storageKeys.goals, blankGoals()), global.TripRepos.FirebaseDoc("goals"));
       status("Conectando con la nube…");
       return app.refresh().catch(()=>{
         status("No se pudo actualizar. Sigo con los datos locales.");
@@ -135,7 +191,7 @@
     app.refresh = function(silent){
       if(!app.cloud) return Promise.resolve();
       if(!silent) status("Actualizando…");
-      return Promise.all([app.expenses.refresh(), app.places.refresh()]).then(()=>{
+      return Promise.all([app.expenses.refresh(), app.places.refresh(), app.goals.refresh()]).then(()=>{
         const h = new Date().toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"});
         status("Nube activa. Actualizado a las "+h+".");
       }).catch(()=>{

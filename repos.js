@@ -96,12 +96,44 @@
     }).catch(()=>{ Cloud.on = false; return null; });
   }
 
+  // Puertos para un documento único (objeto, no lista): p. ej. objetivos.
+  function LocalDoc(storageKey, fallback){
+    function clone(v){ return JSON.parse(JSON.stringify(v)); }
+    return {
+      load: function(){
+        try{
+          const v = JSON.parse(localStorage.getItem(storageKey));
+          return (v===null||v===undefined) ? clone(fallback) : v;
+        }catch(e){ return clone(fallback); }
+      },
+      save: function(v){
+        localStorage.setItem(storageKey, JSON.stringify(v));
+      }
+    };
+  }
+
+  function FirebaseDoc(childPath){
+    function ref(){
+      return Cloud.db.ref("rooms/"+ROOM_ID+"/"+childPath);
+    }
+    return {
+      fetch: function(){
+        return ref().once("value").then(snap=>snap.val());
+      },
+      save: function(v){
+        return ref().set(v);
+      }
+    };
+  }
+
   global.TripRepos = {
     ROOM_ID: ROOM_ID,
     cloudReady: cloudReady,
     localKey: localKey,
     LocalRepo: LocalRepo,
     FirebaseRepo: FirebaseRepo,
+    LocalDoc: LocalDoc,
+    FirebaseDoc: FirebaseDoc,
     initCloudDb: initCloudDb
   };
 })(typeof window!=="undefined"?window:globalThis);

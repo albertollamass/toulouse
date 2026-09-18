@@ -4,7 +4,7 @@
    El CRUD simple y local (perfil, planning, vuelos, checklist) se queda
    aquí tal cual: no justifica capas propias. */
 const PEOPLE = ["Juan","Monzón","Isidro","Morillo","Alberto","Paco"];
-const LS = { who:"tls_whoami", flights:"tls_flights", exp:"tls_expenses", done:"tls_done", checklist:"tls_check", places:"tls_places", tab:"tls_tab" };
+const LS = { who:"tls_whoami", flights:"tls_flights", exp:"tls_expenses", done:"tls_done", checklist:"tls_check", places:"tls_places", tab:"tls_tab", goals:"tls_goals_state" };
 const $ = s => document.querySelector(s);
 
 function setCloudStatus(txt){
@@ -32,7 +32,7 @@ $("#whoami-btn").onclick = ()=>{ renderProfileGrid(); $("#profile-modal").classL
 // ---------- Tabs ----------
 function refreshFromCloud(silent){
   if(!App || !App.cloud) return;
-  App.refresh(silent).then(()=>{ renderExpenses(); renderPlaces(); });
+  App.refresh(silent).then(()=>{ renderExpenses(); renderPlaces(); renderGoals(); });
 }
 function showTab(name){
   document.querySelectorAll(".tabs button").forEach(x=>x.classList.toggle("active", x.dataset.tab===name));
@@ -361,27 +361,25 @@ const GOALS = [
   "Paco nos invita a todo",
   "Nadie pierde el vuelo de vuelta"
 ];
-function loadGoals(){ try{return JSON.parse(localStorage.getItem("tls_goals")||"{}")}catch{return{}} }
-function loadCustomGoals(){ try{const a=JSON.parse(localStorage.getItem("tls_goals_custom")||"[]"); return Array.isArray(a)?a:[]}catch{return[]} }
-function saveCustomGoals(a){ localStorage.setItem("tls_goals_custom",JSON.stringify(a)); }
+function loadGoals(){ return App.goals.state().checks; }
 function renderGoals(){
-  const g=loadGoals(), box=$("#goals"); if(!box) return; box.innerHTML="";
+  const st=App.goals.state(), box=$("#goals"); if(!box) return; box.innerHTML="";
   GOALS.forEach((t,i)=>{
     const l=document.createElement("label");
-    l.innerHTML=`<input type="checkbox" ${g[i]?"checked":""} style="width:auto"> ${t}`;
-    l.querySelector("input").onchange=e=>{ const gg=loadGoals(); gg[i]=e.target.checked; localStorage.setItem("tls_goals",JSON.stringify(gg)); };
+    l.innerHTML=`<input type="checkbox" ${st.checks[i]?"checked":""} style="width:auto"> ${t}`;
+    l.querySelector("input").onchange=e=>{ App.goals.setCheck(i,e.target.checked); renderGoals(); };
     box.appendChild(l);
   });
-  loadCustomGoals().forEach((cg,ci)=>{
+  st.custom.forEach((cg,ci)=>{
     const w=document.createElement("div"); w.className="goal-row";
     const l=document.createElement("label");
     const cb=document.createElement("input");
     cb.type="checkbox"; cb.checked=!!cg.done; cb.style.width="auto";
-    cb.onchange=e=>{ const cc=loadCustomGoals(); cc[ci].done=e.target.checked; saveCustomGoals(cc); };
+    cb.onchange=()=>{ App.goals.toggleCustom(ci); renderGoals(); };
     l.appendChild(cb);
     l.appendChild(document.createTextNode(" "+cg.t));
     const q=document.createElement("button"); q.className="del"; q.textContent="✕"; q.title="Quitar objetivo";
-    q.onclick=()=>{ saveCustomGoals(loadCustomGoals().filter((_,i)=>i!==ci)); renderGoals(); };
+    q.onclick=()=>{ App.goals.removeCustom(ci); renderGoals(); };
     w.appendChild(l); w.appendChild(q); box.appendChild(w);
   });
 }
@@ -389,9 +387,7 @@ $("#goal-form").onsubmit=e=>{
   e.preventDefault();
   const t=$("#goal-input").value.trim();
   if(!t) return;
-  const c=loadCustomGoals();
-  c.push({t:t.slice(0,80), done:false});
-  saveCustomGoals(c);
+  App.goals.addCustom(t);
   $("#goal-input").value="";
   renderGoals();
 };
@@ -460,7 +456,19 @@ $("#sync-refresh-map").onclick = ()=>refreshFromCloud();
 })();
 
 // ---------- init (raíz de composición del driver) ----------
-App = window.TripApp.createApp({exp:LS.exp, places:LS.places}, setCloudStatus);
+// Migra una vez el formato antiguo (checks y customs separados) al documento único.
+function migrateGoals(){
+  try{
+    if(localStorage.getItem(LS.goals)) return;
+    const checks=JSON.parse(localStorage.getItem("tls_goals")||"{}");
+    const raw=JSON.parse(localStorage.getItem("tls_goals_custom")||"[]");
+    localStorage.setItem(LS.goals, JSON.stringify({checks:checks, custom:Array.isArray(raw)?raw:[]}));
+    localStorage.removeItem("tls_goals");
+    localStorage.removeItem("tls_goals_custom");
+  }catch(e){}
+}
+migrateGoals();
+App = window.TripApp.createApp({exp:LS.exp, places:LS.places, goals:LS.goals}, setCloudStatus);
 importFromHash();
 renderProfileGrid(); updateWho(); renderPlan(); renderFlights(); renderExpenseForm(); renderExpenses(); renderChecks(); renderGoals(); initMap();
 // Vuelve a la pestaña donde estabas al recargar (sin scroll brusco).
@@ -474,5 +482,5 @@ renderProfileGrid(); updateWho(); renderPlan(); renderFlights(); renderExpenseFo
 })();
 tapEgg($("#trip-title"), 5, "Logro desbloqueado: tranny certificado de la Ville Rose 🍆");
 tapEgg($("#paco-egg"), 3, "Paco finge que no os conoce ✅");
-App.ready.then(()=>{ renderExpenses(); renderPlaces(); });
+App.ready.then(()=>{ renderExpenses(); renderPlaces(); renderGoals(); });
 if(!loadWho()) $("#profile-modal").classList.remove("hidden");
