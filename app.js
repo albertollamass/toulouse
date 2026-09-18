@@ -167,9 +167,32 @@ function renderExpenses(){
     return `<div class="bal">${p}<b class="${v>=0?"pos":"neg"}">${v>=0?"+":""}${D.formatEUR(v)}</b><small>${v>=0?"le deben":"debe"}</small></div>`;
   }).join("");
   const s=D.simplifyDebts(bal);
-  $("#settlements").innerHTML = s.length
-    ? "<b>Para saldar:</b><br>"+s.map(t=>`${t.from} → ${t.to}: <b>${D.formatEUR(t.cents)}</b>`).join("<br>")
-    : "Sin deudas. Añade el primer gasto 🍷";
+  const boxS=$("#settlements");
+  if(!s.length){
+    boxS.innerHTML="Sin deudas. Añade el primer gasto 🍷";
+  } else {
+    boxS.innerHTML="<b>Para saldar:</b>";
+    s.forEach(t=>{
+      const row=document.createElement("div"); row.className="settle-row";
+      const txt=document.createElement("span");
+      txt.innerHTML=`${t.from} → ${t.to}: <b>${D.formatEUR(t.cents)}</b>`;
+      const btn=document.createElement("button");
+      btn.className="btn ghost small"; btn.textContent="Pagado";
+      btn.onclick=()=>{
+        if(!confirm(`Marcar como pagado: ${t.from} debe ${D.formatEUR(t.cents)} a ${t.to}`)) return;
+        App.expenses.add({
+          title:`Pago de ${t.from} a ${t.to}`,
+          amountEuros:t.cents/100,
+          payer:t.from,
+          parts:[t.to],
+          by:loadWho()||t.from,
+          date:new Date().toLocaleDateString("es-ES")
+        });
+        renderExpenses();
+      };
+      row.appendChild(txt); row.appendChild(btn); boxS.appendChild(row);
+    });
+  }
   $("#expense-list").innerHTML = arr.length? "" : "<p class='hint'>Sin gastos todavía.</p>";
   arr.forEach((g)=>{
     const d=document.createElement("div"); d.className="exp";

@@ -334,6 +334,8 @@ main{position:relative;z-index:1;max-width:860px;margin:0 auto;padding:28px 16px
 .pos{color:var(--ok)}
 .neg{color:var(--brick)}
 .settlements{border:1px dashed var(--line);border-radius:18px;padding:14px;font-size:.95em}
+.settle-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 2px;border-bottom:1px solid var(--line)}
+.settle-row:last-child{border-bottom:none}
 form input,form select{
   width:100%;
   padding:12px 14px;
