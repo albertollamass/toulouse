@@ -23,14 +23,29 @@ function renderProfileGrid(){
     g.appendChild(b);
   });
 }
+function escHtml(s){
+  return String(s==null?"":s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
 function updateWho(){
   const w = loadWho();
   $("#whoami-label").textContent = w || "nadie aún";
+  const bp = $("#breakdown-person");
+  if(bp && w && PEOPLE.includes(w)) bp.value = w;
   if(App){
     try{ renderExpenseForm(); }catch(e){}
     try{ renderExpenses(); }catch(e){}
   }
 }
+// Sub-pestañas del tricount: resumen general vs desglose por persona.
+document.querySelectorAll(".subtabs button").forEach(b=>{
+  b.onclick = ()=>{
+    document.querySelectorAll(".subtabs button").forEach(x=>x.classList.toggle("active", x===b));
+    const des = b.dataset.sub==="desglose";
+    $("#sub-resumen").hidden = des;
+    $("#sub-desglose").hidden = !des;
+    if(des) renderBreakdown();
+  };
+});
 $("#whoami-btn").onclick = ()=>{ renderProfileGrid(); $("#profile-modal").classList.remove("hidden"); };
 
 // ---------- Tabs ----------
@@ -195,10 +210,40 @@ function renderExpenseSummary(arr, bal){
   box.innerHTML = html;
 }
 
+function renderBreakdown(){
+  const D = window.TripDomain;
+  if(!App) return;
+  const sel = $("#breakdown-person"), list = $("#breakdown-list"), tot = $("#breakdown-total");
+  if(!sel || !list || !tot) return;
+  const who = loadWho();
+  const prev = sel.value;
+  sel.innerHTML = PEOPLE.map(p=>`<option value="${escHtml(p)}">${escHtml(p)}</option>`).join("");
+  sel.value = (prev && PEOPLE.includes(prev)) ? prev : (who && PEOPLE.includes(who) ? who : PEOPLE[0]);
+  const person = sel.value;
+  const arr = App.expenses.list();
+  const lines = D.breakdownForPerson(arr, person);
+  const sum = lines.reduce((s,l)=>s+l.shareCents,0);
+  tot.innerHTML = `A <b>${escHtml(person)}</b> le tocan <b>${D.formatEUR(sum)}</b> en ${lines.length} gasto${lines.length===1?"":"s"}`;
+  if(!lines.length){
+    list.innerHTML = `<p class="hint">${escHtml(person)} no participa en ningún gasto todavía.</p>`;
+    return;
+  }
+  list.innerHTML = lines.map(l=>{
+    const names = l.parts.map(escHtml).join(", ");
+    return `<div class="brk"><div><b>${escHtml(l.title)}</b> · ${D.formatEUR(l.totalCents)}€ total`
+      + `<br><small>${D.formatEUR(l.totalCents)} entre ${l.parts.length} (${names}) → te tocan <b>${D.formatEUR(l.shareCents)}</b> · pagó ${escHtml(l.payer)}${l.date?", "+escHtml(l.date):""}</small></div></div>`;
+  }).join("");
+}
+(function(){
+  const bp = $("#breakdown-person");
+  if(bp) bp.onchange = renderBreakdown;
+})();
+
 function renderExpenses(){
   const D = window.TripDomain;
   const arr = App.expenses.list(), bal = D.computeBalances(arr, PEOPLE);
   renderExpenseSummary(arr, bal);
+  try{ renderBreakdown(); }catch(e){}
   $("#balances").innerHTML = PEOPLE.map(p=>{
     const v=(bal[p]||0);
     return `<div class="bal">${p}<b class="${v>=0?"pos":"neg"}">${v>=0?"+":""}${D.formatEUR(v)}</b><small>${v>=0?"le deben":"debe"}</small></div>`;

@@ -93,9 +93,22 @@
       <p>Las cuentas del grupo viven aquí.</p>
       <p class="hint" id="exp-cloud">Comprobando sincronización…</p>
       <button id="sync-refresh-exp" class="btn ghost small">Actualizar</button>
-      <div id="expense-summary" class="trip-summary"></div>
-      <div id="balances" class="balances"></div>
-      <div id="settlements" class="settlements"></div>
+      <div class="subtabs" role="tablist" aria-label="Vistas del tricount">
+        <button data-sub="resumen" class="active" role="tab">Resumen</button>
+        <button data-sub="desglose" role="tab">Desglose por persona</button>
+      </div>
+      <div id="sub-resumen">
+        <div id="expense-summary" class="trip-summary"></div>
+        <div id="balances" class="balances"></div>
+        <div id="settlements" class="settlements"></div>
+      </div>
+      <div id="sub-desglose" hidden>
+        <div class="row">
+          <select id="breakdown-person" aria-label="Persona del desglose"></select>
+        </div>
+        <div id="breakdown-total" class="breakdown-total"></div>
+        <div id="breakdown-list"></div>
+      </div>
     </div>
     <div class="card">
       <h3>Añadir gasto</h3>

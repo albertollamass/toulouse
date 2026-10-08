@@ -93,6 +93,29 @@
     return { totalCents: total, count: count, paidCents: paid, shareCents: share };
   }
 
+  // Desglose por persona: de dónde viene su parte, gasto a gasto.
+  // Cada línea conserva el concepto, el total del gasto, entre cuántos
+  // se dividió y la parte exacta que le toca (con resto de redondeo).
+  function breakdownForPerson(expenses, person){
+    const out = [];
+    (expenses||[]).forEach(g=>{
+      const parts = Array.isArray(g.parts) ? g.parts : [];
+      if(parts.indexOf(person)===-1) return;
+      const total = eurosToCents(g.amount);
+      if(!(total>0)) return;
+      const share = splitShares(g).filter(s=>s.who===person).reduce((s,x)=>s+x.cents,0);
+      out.push({
+        title: g.title||"",
+        date: g.date||"",
+        payer: g.payer||"",
+        totalCents: total,
+        parts: parts.slice(),
+        shareCents: share
+      });
+    });
+    return out;
+  }
+
   // Servicio de dominio: simplificación de deudas (algoritmo voraz).
   function simplifyDebts(balancesCents){
     const cred = Object.entries(balancesCents).filter(([_,v])=>v>0).sort((a,b)=>b[1]-a[1]);
@@ -136,6 +159,7 @@
     splitShares: splitShares,
     computeBalances: computeBalances,
     computeExpenseTotals: computeExpenseTotals,
+    breakdownForPerson: breakdownForPerson,
     simplifyDebts: simplifyDebts,
     createPlace: createPlace
   };
