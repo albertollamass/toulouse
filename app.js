@@ -26,6 +26,10 @@ function renderProfileGrid(){
 function updateWho(){
   const w = loadWho();
   $("#whoami-label").textContent = w || "nadie aún";
+  if(App){
+    try{ renderExpenseForm(); }catch(e){}
+    try{ renderExpenses(); }catch(e){}
+  }
 }
 $("#whoami-btn").onclick = ()=>{ renderProfileGrid(); $("#profile-modal").classList.remove("hidden"); };
 
@@ -159,9 +163,42 @@ $("#exp-clear").onclick = ()=>{
   App.expenses.clear(); renderExpenses();
 };
 
+function renderExpenseSummary(arr, bal){
+  const D = window.TripDomain;
+  const box = $("#expense-summary");
+  if(!box) return;
+  const T = D.computeExpenseTotals(arr, PEOPLE);
+  const who = loadWho();
+  const avg = PEOPLE.length ? Math.round(T.totalCents / PEOPLE.length) : 0;
+  let html = `<div class="total-hero"><span>GASTO TOTAL DEL VIAJE</span><b>${D.formatEUR(T.totalCents)}</b>`
+    + `<small>${T.count} gasto${T.count===1?"":"s"} · ~${D.formatEUR(avg)} por persona (${PEOPLE.length})</small></div>`;
+  if(who && PEOPLE.includes(who)){
+    const paid = T.paidCents[who]||0, share = T.shareCents[who]||0;
+    const myBal = (bal[who]||0);
+    const nPaid = arr.filter(g=>g.payer===who).length;
+    const nIn = arr.filter(g=>(g.parts||[]).includes(who)).length;
+    const cls = myBal>=0 ? "pos" : "neg";
+    const verdict = myBal>0 ? `te deben ${D.formatEUR(myBal)}` : myBal<0 ? `debes ${D.formatEUR(-myBal)}` : "estás a cero, crack";
+    html += `<div class="my-box"><h4>💰 Tus gastos · ${who}</h4>`
+      + `<div class="my-grid">`
+      + `<div><span>Has pagado</span><b>${D.formatEUR(paid)}</b><small>${nPaid} gasto${nPaid===1?"":"s"} pagados por ti</small></div>`
+      + `<div><span>Te toca</span><b>${D.formatEUR(share)}</b><small>participas en ${nIn}</small></div>`
+      + `<div><span>Balance</span><b class="${cls}">${myBal>=0?"+":""}${D.formatEUR(myBal)}</b><small>${verdict}</small></div>`
+      + `</div></div>`;
+  } else {
+    html += `<div class="my-box empty"><h4>💰 Tus gastos</h4><p class="hint">Elige quién eres arriba a la derecha para ver tu parte.</p></div>`;
+  }
+  const rows = PEOPLE.map(p=>{
+    return `<div class="tot-row"><span>${p}</span><span>pagó <b>${D.formatEUR(T.paidCents[p]||0)}</b> · le toca <b>${D.formatEUR(T.shareCents[p]||0)}</b></span></div>`;
+  }).join("");
+  html += `<details class="totals-detail"><summary>Ver desglose por persona</summary>${rows}</details>`;
+  box.innerHTML = html;
+}
+
 function renderExpenses(){
   const D = window.TripDomain;
   const arr = App.expenses.list(), bal = D.computeBalances(arr, PEOPLE);
+  renderExpenseSummary(arr, bal);
   $("#balances").innerHTML = PEOPLE.map(p=>{
     const v=(bal[p]||0);
     return `<div class="bal">${p}<b class="${v>=0?"pos":"neg"}">${v>=0?"+":""}${D.formatEUR(v)}</b><small>${v>=0?"le deben":"debe"}</small></div>`;

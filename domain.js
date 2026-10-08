@@ -71,6 +71,28 @@
     return bal;
   }
 
+  // Resumen de gastos: total del viaje + cuánto pagó y cuánto le
+  // corresponde a cada persona (reparto exacto en céntimos).
+  function computeExpenseTotals(expenses, people){
+    const paid = {}, share = {};
+    (people||[]).forEach(p=>{ paid[p]=0; share[p]=0; });
+    let total = 0, count = 0;
+    (expenses||[]).forEach(g=>{
+      const cents = eurosToCents(g.amount);
+      if(!(cents>0)) return;
+      total += cents;
+      count += 1;
+      if(paid[g.payer]===undefined) paid[g.payer]=0;
+      paid[g.payer]+=cents;
+      splitShares(g).forEach(s=>{
+        if(share[s.who]===undefined) share[s.who]=0;
+        if(paid[s.who]===undefined) paid[s.who]=0;
+        share[s.who]+=s.cents;
+      });
+    });
+    return { totalCents: total, count: count, paidCents: paid, shareCents: share };
+  }
+
   // Servicio de dominio: simplificación de deudas (algoritmo voraz).
   function simplifyDebts(balancesCents){
     const cred = Object.entries(balancesCents).filter(([_,v])=>v>0).sort((a,b)=>b[1]-a[1]);
@@ -113,6 +135,7 @@
     createExpense: createExpense,
     splitShares: splitShares,
     computeBalances: computeBalances,
+    computeExpenseTotals: computeExpenseTotals,
     simplifyDebts: simplifyDebts,
     createPlace: createPlace
   };
